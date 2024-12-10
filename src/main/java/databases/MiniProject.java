@@ -31,13 +31,34 @@ public class MiniProject {
   public static Map<String, Integer> firstQuery(Connection connection) throws SQLException {
 
     System.out.println("################## 1st Query ###############");
-
     Map<String, Integer> results = new LinkedHashMap<>();
 
-    // TODO - add code to perform the query and return the results 
+    // TODO - add code to perform the query and return the results
     // - remember to close the statement and result set
-    // end TODO
+    /*
+    SELECT uniqueCarrier, COUNT(*) AS delayCount
+    FROM delayedFlights
+    GROUP BY uniqueCarrier
+    ORDER BY delayCount ASC
+    LIMIT 5;
+     */
+    String query = "SELECT uniqueCarrier, COUNT(*) AS delayCount " +
+            "FROM delayedFlights " +
+            "GROUP BY uniqueCarrier " +
+            "ORDER BY delayCount ASC " +
+            "LIMIT 5";
 
+    try (PreparedStatement statement = connection.prepareStatement(query);
+         ResultSet resultSet = statement.executeQuery()) {
+
+      while (resultSet.next()) {
+        String uniqueCarrier = resultSet.getString("uniqueCarrier");
+        int delayCount = resultSet.getInt("delayCount");
+        results.put(uniqueCarrier, delayCount);
+      }
+    }
+
+    // end TODO
     return results;
   }
 
@@ -56,6 +77,31 @@ public class MiniProject {
 
     // TODO - add code to perform the query and return the results 
     // - remember to close the statement and result set
+
+    /*
+    SELECT state, COUNT(*) AS delayCount
+    FROM airport AS ap
+    JOIN delayedFlights AS df ON ap.airportCode = df.dest
+    GROUP BY state
+    ORDER BY delayCount DESC
+    LIMIT 5;
+     */
+    String query = "SELECT state, COUNT(*) AS delayCount " +
+            "FROM airport AS ap " +
+            "JOIN delayedFlights AS df ON ap.airportCode = df.dest " +
+            "GROUP BY state " +
+            "ORDER BY delayCount DESC " +
+            "LIMIT 5";
+
+    try (PreparedStatement statement = connection.prepareStatement(query);
+         ResultSet resultSet = statement.executeQuery()) {
+
+      while (resultSet.next()) {
+        String state = resultSet.getString("state");
+        int delayCount = resultSet.getInt("delayCount");
+        results.put(state, delayCount);
+      }
+    }
     // end TODO
 
     return results;
@@ -76,6 +122,32 @@ public class MiniProject {
 
     // TODO - add code to perform the query and return the results 
     // - remember to close the statement and result set
+    /*
+    SELECT ap.airportName, SUM(df.depDelay) AS totalDepDelay
+    FROM airport AS ap
+    JOIN delayedFlights AS df ON ap.airportCode = df.origin
+    WHERE df.month = 5
+    GROUP BY ap.airportName
+    ORDER BY totalDepDelay DESC
+    LIMIT 3;
+     */
+    String query = "SELECT ap.airportName, SUM(df.depDelay) AS totalDepDelay " +
+            "FROM airport AS ap " +
+            "JOIN delayedFlights AS df ON ap.airportCode = df.origin " +
+            "WHERE df.month = 5 " +
+            "GROUP BY ap.airportName " +
+            "ORDER BY totalDepDelay DESC " +
+            "LIMIT 3";
+
+    try (PreparedStatement statement = connection.prepareStatement(query);
+          ResultSet resultSet = statement.executeQuery()) {
+
+      while (resultSet.next()) {
+        String airportName = resultSet.getString("airportName");
+        int totalDepDelay = resultSet.getInt("totalDepDelay");
+        results.put(airportName, totalDepDelay);
+      }
+    }
     // end TODO
 
     return results;
@@ -97,6 +169,28 @@ public class MiniProject {
 
     // TODO - add code to perform the query and return the results 
     // - remember to close the statement and result set
+    /*
+    SELECT ap.airportName, df.depDelay
+    FROM airport AS ap
+    JOIN delayedFlights AS df ON ap.airportCode = df.origin
+    WHERE df.distance > 1500 AND df.depDelay > 240
+    ORDER BY df.depDelay DESC;
+     */
+    String query = "SELECT ap.airportName, df.depDelay " +
+            "FROM airport AS ap " +
+            "JOIN delayedFlights AS df ON ap.airportCode = df.origin " +
+            "WHERE df.distance > 1500 AND df.depDelay > 240 " +
+            "ORDER BY df.depDelay DESC";
+
+    try (PreparedStatement statement = connection.prepareStatement(query);
+            ResultSet resultSet = statement.executeQuery()) {
+
+      while (resultSet.next()) {
+        String airportName = resultSet.getString("airportName");
+        int depDelay = resultSet.getInt("depDelay");
+        results.put(airportName, depDelay);
+      }
+    }
     // end TODO
 
     return results;
@@ -117,6 +211,34 @@ public class MiniProject {
 
     // TODO - add code to perform the query and return the results 
     // - remember to close the statement and result set
+    /*
+    SELECT a1.state, COUNT(*) AS delayCount
+    FROM airport a1
+    JOIN delayedFlights df ON a1.airportCode = df.origin
+    JOIN airport a2 ON df.dest = a2.airportCode
+    WHERE a1.state = a2.state AND df.depDelay > 120 AND a1.airportCode <> a2.airportCode
+    GROUP BY a1.state
+    ORDER BY delayCount DESC
+    LIMIT 3;
+     */
+    String query = "SELECT a1.state, COUNT(*) AS delayCount " +
+            "FROM airport a1 " +
+            "JOIN delayedFlights df ON a1.airportCode = df.origin " +
+            "JOIN airport a2 ON df.dest = a2.airportCode " +
+            "WHERE a1.state = a2.state AND df.depDelay > 120 AND a1.airportCode <> a2.airportCode " +
+            "GROUP BY a1.state " +
+            "ORDER BY delayCount DESC " +
+            "LIMIT 3";
+
+    try (PreparedStatement statement = connection.prepareStatement(query);
+            ResultSet resultSet = statement.executeQuery()) {
+
+      while (resultSet.next()) {
+        String state = resultSet.getString("state");
+        int delayCount = resultSet.getInt("delayCount");
+        results.put(state, delayCount);
+      }
+    }
     // end TODO
 
     return results;
@@ -175,12 +297,14 @@ public class MiniProject {
 
     // TODO - complete the PreparedStatement with placeholder values
 
+    String insert = "INSERT INTO airport VALUES (?,?,?,?)";
+
     // stream, reader and statement will get closed here as we are using try-with-resources
     try (InputStream airportFile = MiniProject.class.getClassLoader().getResourceAsStream(file);
         BufferedReader br =
             new BufferedReader(new InputStreamReader(airportFile, StandardCharsets.UTF_8));
 
-        PreparedStatement statement = null;
+        PreparedStatement statement = connection.prepareStatement(insert);
 
     ) {
     // end TODO
